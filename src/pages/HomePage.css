@@ -1,0 +1,94 @@
+.home-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  color: white !important;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+
+  padding: 20px;
+  flex-direction: column;
+
+}
+
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  filter: blur(5px); 
+}
+
+/* Capa oscura opcional para mejor legibilidad */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 50% negro */
+  z-index: -1;
+}
+
+.content {
+  z-index: 1;
+  color: white !important;
+  text-align: center;
+  padding: 20px;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+
+}
+
+.buttons {
+  margin-top: 20px;
+}
+
+.modern-button {
+  padding: 12px 28px;
+  margin: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #db9935, #df0e0e); /* celeste degradado */
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(236, 245, 113, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(2px); /* efecto suave con video */
+}
+
+.modern-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(237, 247, 99, 0.3);
+  background: linear-gradient(135deg, #df0e0e, #db9935); /* reversa el degradado */
+}
+
+.navbar, .footer {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  text-align: center;
+  z-index: 10;
+}
+
+.navbar {
+  top: 0;
+  padding: 16px 32px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.footer {
+  bottom: 0;
+  padding: 12px 32px;
+  font-size: 14px;
+}

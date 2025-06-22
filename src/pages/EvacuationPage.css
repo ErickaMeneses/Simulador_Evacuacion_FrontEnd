@@ -1,0 +1,34 @@
+.evacuation-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background: #3498db;
+  color: white;
+}
+
+.cost-summary {
+  margin-top: 20px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+.cost-summary p {
+  margin: 4px 0;
+  font-weight: bold;
+}
