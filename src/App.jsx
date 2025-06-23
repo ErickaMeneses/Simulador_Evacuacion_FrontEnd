@@ -22,6 +22,7 @@ import HomePage from "./pages/HomePage";
 import ManagementPage from "./pages/ManagementPage";
 import EvacuationPage from "./pages/EvacuationPage";
 import Evacuation3DPage from "./pages/Evacuation3DPage";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function App() {
   return (

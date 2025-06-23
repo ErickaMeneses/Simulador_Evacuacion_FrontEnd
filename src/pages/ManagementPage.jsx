@@ -1,192 +1,176 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { Modal, Button, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "./ManagementPage.css";
 
 export default function ManagementPage() {
+  const navigate = useNavigate();
+
   const [exits, setExits] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [people, setPeople] = useState([]);
 
-  const [newExit, setNewExit] = useState({ location: "", capacity: 1 });
-  const [newRoom, setNewRoom] = useState({ name: "", exitId: "" });
-  const [newPerson, setNewPerson] = useState({ name: "", speed: 1, roomId: "" });
+  // Modals de formularios
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showPersonModal, setShowPersonModal] = useState(false);
 
+  // Modal de confirmación y mensaje
+  const [confirmModal, setConfirmModal] = useState({ show: false, message: "", onConfirm: null });
+  const [messageModal, setMessageModal] = useState({ show: false, message: "", variant: "success" });
+
+  // Estados de formulario y edición
   const [editingExit, setEditingExit] = useState(null);
   const [editingRoom, setEditingRoom] = useState(null);
   const [editingPerson, setEditingPerson] = useState(null);
 
+  const [formExit, setFormExit] = useState({ location: "", capacity: 1 });
+  const [formRoom, setFormRoom] = useState({ name: "", exitId: "" });
+  const [formPerson, setFormPerson] = useState({ name: "", speed: 1, roomId: "" });
+
   useEffect(() => {
-    loadAllData();
+    fetchAll();
   }, []);
 
-  const loadAllData = async () => {
-    try {
-      const exitsRes = await api.get("/management/exits");
-      const roomsRes = await api.get("/management/rooms");
-      const peopleRes = await api.get("/management/people");
-      setExits(exitsRes.data);
-      setRooms(roomsRes.data);
-      setPeople(peopleRes.data);
-    } catch (err) {
-      console.error("Error al cargar datos:", err);
-    }
+  const fetchAll = async () => {
+    const exitsRes = await api.get("/management/exits");
+    const roomsRes = await api.get("/management/rooms");
+    const peopleRes = await api.get("/management/people");
+    setExits(exitsRes.data);
+    setRooms(roomsRes.data);
+    setPeople(peopleRes.data);
   };
 
-  // ---------- EXIT CRUD ----------
-  const createOrUpdateExit = async () => {
+  // Mostrar mensaje tipo popup
+  const showMessage = (msg, variant = "success") => {
+    setMessageModal({ show: true, message: msg, variant });
+    setTimeout(() => setMessageModal({ show: false, message: "", variant: "success" }), 2500);
+  };
+
+  // Abrir modales de formulario
+  const openExitModal = (exit = null) => {
+    setEditingExit(exit);
+    setFormExit(exit || { location: "", capacity: 1 });
+    setShowExitModal(true);
+  };
+
+  const openRoomModal = (room = null) => {
+    setEditingRoom(room);
+    setFormRoom(room || { name: "", exitId: "" });
+    setShowRoomModal(true);
+  };
+
+  const openPersonModal = (person = null) => {
+    setEditingPerson(person);
+    setFormPerson(person || { name: "", speed: 1, roomId: "" });
+    setShowPersonModal(true);
+  };
+
+  // Guardar cambios
+  const saveExit = async () => {
     try {
       if (editingExit) {
-        await api.put(`/management/exits/${editingExit.id}`, newExit);
-        setEditingExit(null);
+        await api.put(`/management/exits/${editingExit.id}`, formExit);
+        showMessage("Salida editada con éxito");
       } else {
-        await api.post("/management/exits", newExit);
+        await api.post("/management/exits", formExit);
+        showMessage("Salida añadida con éxito");
       }
-      setNewExit({ location: "", capacity: 1 });
-      loadAllData();
-    } catch (err) {
-      console.error("Error en exit:", err);
+    } catch {
+      showMessage("Error al guardar salida", "danger");
     }
+    setShowExitModal(false);
+    fetchAll();
   };
 
-  const deleteExit = async (id) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta salida?")) {
-      await api.delete(`/management/exits/${id}`);
-      loadAllData();
-    }
-  };
-
-  // ---------- ROOM CRUD ----------
-  const createOrUpdateRoom = async () => {
+  const saveRoom = async () => {
     try {
       if (editingRoom) {
-        await api.put(`/management/rooms/${editingRoom.id}`, newRoom);
-        setEditingRoom(null);
+        await api.put(`/management/rooms/${editingRoom.id}`, formRoom);
+        showMessage("Sala editada con éxito");
       } else {
-        await api.post("/management/rooms", newRoom);
+        await api.post("/management/rooms", formRoom);
+        showMessage("Sala añadida con éxito");
       }
-      setNewRoom({ name: "", exitId: "" });
-      loadAllData();
-    } catch (err) {
-      console.error("Error en room:", err);
+    } catch {
+      showMessage("Error al guardar sala", "danger");
+    }
+    setShowRoomModal(false);
+    fetchAll();
+  };
+
+  const savePerson = async () => {
+    try {
+      if (editingPerson) {
+        await api.put(`/management/people/${editingPerson.id}`, formPerson);
+        showMessage("Persona editada con éxito");
+      } else {
+        await api.post("/management/people", formPerson);
+        showMessage("Persona añadida con éxito");
+      }
+    } catch {
+      showMessage("Error al guardar persona", "danger");
+    }
+    setShowPersonModal(false);
+    fetchAll();
+  };
+
+  // Confirmación genérica
+  const confirmDelete = (msg, onConfirm) => {
+    setConfirmModal({ show: true, message: msg, onConfirm });
+  };
+
+  const handleConfirm = () => {
+    if (confirmModal.onConfirm) confirmModal.onConfirm();
+    setConfirmModal({ show: false, message: "", onConfirm: null });
+  };
+
+  // Eliminar
+  const deleteExit = async (id) => {
+    try {
+      await api.delete(`/management/exits/${id}`);
+      showMessage("Salida eliminada");
+      fetchAll();
+    } catch {
+      showMessage("Error al eliminar salida", "danger");
     }
   };
 
   const deleteRoom = async (id) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta oficina?")) {
-      await api.delete(`/management/rooms/${id}`);
-      loadAllData();
-    }
-  };
-
-  // ---------- PERSON CRUD ----------
-  const createOrUpdatePerson = async () => {
     try {
-      if (editingPerson) {
-        await api.put(`/management/people/${editingPerson.id}`, newPerson);
-        setEditingPerson(null);
-      } else {
-        await api.post("/management/people", newPerson);
-      }
-      setNewPerson({ name: "", speed: 1, roomId: "" });
-      loadAllData();
-    } catch (err) {
-      console.error("Error en person:", err);
+      await api.delete(`/management/rooms/${id}`);
+      showMessage("Sala eliminada");
+      fetchAll();
+    } catch {
+      showMessage("Error al eliminar sala", "danger");
     }
   };
 
   const deletePerson = async (id) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta persona?")) {
+    try {
       await api.delete(`/management/people/${id}`);
-      loadAllData();
+      showMessage("Persona eliminada");
+      fetchAll();
+    } catch {
+      showMessage("Error al eliminar persona", "danger");
     }
   };
 
   return (
-    <div className="management-container">
+    <div className="page-container">
+
       <h1>Gestión de Salidas, Salas y Personas</h1>
-
-      {/* EXIT */}
-      <div className="section">
-        <h2>{editingExit ? "Editar Salida" : "Agregar Salida"}</h2>
-        <input
-          type="text"
-          placeholder="Ubicación"
-          value={newExit.location}
-          onChange={(e) => setNewExit({ ...newExit, location: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Capacidad"
-          value={newExit.capacity}
-          min={1}
-          onChange={(e) => setNewExit({ ...newExit, capacity: parseInt(e.target.value) })}
-        />
-        <button onClick={createOrUpdateExit}>
-          {editingExit ? "Actualizar Salida" : "Agregar Salida"}
-        </button>
+      <div className="back-buttons">
+        <Button variant="secondary" onClick={() => navigate("/")}>Volver al Inicio</Button>
+        <Button variant="success" onClick={() => navigate("/evacuation")}>Iniciar Simulación</Button>
       </div>
 
-      {/* ROOM */}
-      <div className="section">
-        <h2>{editingRoom ? "Editar Oficina" : "Agregar Oficina"}</h2>
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={newRoom.name}
-          onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-        />
-        <select
-          value={newRoom.exitId}
-          onChange={(e) => setNewRoom({ ...newRoom, exitId: e.target.value })}
-        >
-          <option value="">Selecciona una salida</option>
-          {exits.map((exit) => (
-            <option key={exit.id} value={exit.id}>
-              {exit.location}
-            </option>
-          ))}
-        </select>
-        <button onClick={createOrUpdateRoom}>
-          {editingRoom ? "Actualizar Oficina" : "Agregar Oficina"}
-        </button>
-      </div>
-
-      {/* PERSON */}
-      <div className="section">
-        <h2>{editingPerson ? "Editar Persona" : "Agregar Persona"}</h2>
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={newPerson.name}
-          onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Velocidad"
-          value={newPerson.speed}
-          min={1}
-          onChange={(e) => setNewPerson({ ...newPerson, speed: parseFloat(e.target.value) })}
-        />
-        <select
-          value={newPerson.roomId}
-          onChange={(e) => setNewPerson({ ...newPerson, roomId: e.target.value })}
-        >
-          <option value="">Selecciona una sala</option>
-          {rooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              {room.name}
-            </option>
-          ))}
-        </select>
-        <button onClick={createOrUpdatePerson}>
-          {editingPerson ? "Actualizar Persona" : "Agregar Persona"}
-        </button>
-      </div>
-
-      {/* TABLES */}
-      <div className="section">
+      {/* --- Salidas --- */}
+      <div className="mb-5">
         <h2>Salidas</h2>
-        <table>
+        <Button variant="primary" onClick={() => openExitModal()}>Añadir Salida</Button>
+        <table className="table table-striped table-bordered mt-3">
           <thead>
             <tr>
               <th>Ubicación</th>
@@ -195,16 +179,13 @@ export default function ManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {exits.map((exit) => (
-              <tr key={exit.id}>
-                <td>{exit.location}</td>
-                <td>{exit.capacity}</td>
+            {exits.map(e => (
+              <tr key={e.id}>
+                <td>{e.location}</td>
+                <td>{e.capacity}</td>
                 <td>
-                  <button onClick={() => {
-                    setNewExit({ location: exit.location, capacity: exit.capacity });
-                    setEditingExit(exit);
-                  }}>Editar</button>
-                  <button onClick={() => deleteExit(exit.id)}>Eliminar</button>
+                  <Button size="sm" variant="warning" onClick={() => openExitModal(e)}>Editar</Button>{' '}
+                  <Button size="sm" variant="danger" onClick={() => confirmDelete("¿Eliminar esta salida?", () => deleteExit(e.id))}>Eliminar</Button>
                 </td>
               </tr>
             ))}
@@ -212,9 +193,11 @@ export default function ManagementPage() {
         </table>
       </div>
 
-      <div className="section">
+      {/* --- Salas --- */}
+      <div className="mb-5">
         <h2>Salas</h2>
-        <table>
+        <Button variant="primary" onClick={() => openRoomModal()}>Añadir Sala</Button>
+        <table className="table table-striped table-bordered mt-3">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -223,16 +206,13 @@ export default function ManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {rooms.map((room) => (
-              <tr key={room.id}>
-                <td>{room.name}</td>
-                <td>{room.exit?.location}</td>
+            {rooms.map(r => (
+              <tr key={r.id}>
+                <td>{r.name}</td>
+                <td>{r.exit?.location}</td>
                 <td>
-                  <button onClick={() => {
-                    setNewRoom({ name: room.name, exitId: room.exitId });
-                    setEditingRoom(room);
-                  }}>Editar</button>
-                  <button onClick={() => deleteRoom(room.id)}>Eliminar</button>
+                  <Button size="sm" variant="warning" onClick={() => openRoomModal(r)}>Editar</Button>{' '}
+                  <Button size="sm" variant="danger" onClick={() => confirmDelete("¿Eliminar esta sala?", () => deleteRoom(r.id))}>Eliminar</Button>
                 </td>
               </tr>
             ))}
@@ -240,9 +220,11 @@ export default function ManagementPage() {
         </table>
       </div>
 
-      <div className="section">
+      {/* --- Personas --- */}
+      <div className="mb-5">
         <h2>Personas</h2>
-        <table>
+        <Button variant="primary" onClick={() => openPersonModal()}>Añadir Persona</Button>
+        <table className="table table-striped table-bordered mt-3">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -252,27 +234,117 @@ export default function ManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {people.map((person) => (
-              <tr key={person.id}>
-                <td>{person.name}</td>
-                <td>{person.speed}</td>
-                <td>{person.room?.name}</td>
+            {people.map(p => (
+              <tr key={p.id}>
+                <td>{p.name}</td>
+                <td>{p.speed}</td>
+                <td>{p.room?.name}</td>
                 <td>
-                  <button onClick={() => {
-                    setNewPerson({
-                      name: person.name,
-                      speed: person.speed,
-                      roomId: person.roomId
-                    });
-                    setEditingPerson(person);
-                  }}>Editar</button>
-                  <button onClick={() => deletePerson(person.id)}>Eliminar</button>
+                  <Button size="sm" variant="warning" onClick={() => openPersonModal(p)}>Editar</Button>{' '}
+                  <Button size="sm" variant="danger" onClick={() => confirmDelete("¿Eliminar esta persona?", () => deletePerson(p.id))}>Eliminar</Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* --- Modales de Formulario --- */}
+      <Modal show={showExitModal} onHide={() => setShowExitModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingExit ? "Editar Salida" : "Añadir Salida"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Ubicación</Form.Label>
+            <Form.Control value={formExit.location} onChange={e => setFormExit({ ...formExit, location: e.target.value })} />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Capacidad</Form.Label>
+            <Form.Control type="number" value={formExit.capacity} onChange={e => setFormExit({ ...formExit, capacity: parseInt(e.target.value) })} />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowExitModal(false)}>Cancelar</Button>
+          <Button variant="primary" onClick={saveExit}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showRoomModal} onHide={() => setShowRoomModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingRoom ? "Editar Sala" : "Añadir Sala"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Nombre</Form.Label>
+            <Form.Control value={formRoom.name} onChange={e => setFormRoom({ ...formRoom, name: e.target.value })} />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Salida</Form.Label>
+            <Form.Select value={formRoom.exitId} onChange={e => setFormRoom({ ...formRoom, exitId: e.target.value })}>
+              <option value="">Selecciona Exit</option>
+              {exits.map(exit => (
+                <option key={exit.id} value={exit.id}>{exit.location}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRoomModal(false)}>Cancelar</Button>
+          <Button variant="primary" onClick={saveRoom}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showPersonModal} onHide={() => setShowPersonModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editingPerson ? "Editar Persona" : "Añadir Persona"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Nombre</Form.Label>
+            <Form.Control value={formPerson.name} onChange={e => setFormPerson({ ...formPerson, name: e.target.value })} />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Velocidad</Form.Label>
+            <Form.Control type="number" value={formPerson.speed} onChange={e => setFormPerson({ ...formPerson, speed: parseFloat(e.target.value) })} />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Sala</Form.Label>
+            <Form.Select value={formPerson.roomId} onChange={e => setFormPerson({ ...formPerson, roomId: e.target.value })}>
+              <option value="">Selecciona Sala</option>
+              {rooms.map(room => (
+                <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPersonModal(false)}>Cancelar</Button>
+          <Button variant="primary" onClick={savePerson}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Confirm Modal */}
+    <Modal show={confirmModal.show} onHide={() => setConfirmModal({ show: false })} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Confirmar</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>{confirmModal.message}</Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setConfirmModal({ show: false })}>Cancelar</Button>
+        <Button variant="danger" onClick={handleConfirm}>Confirmar</Button>
+      </Modal.Footer>
+    </Modal>
+
+    {/* ✅ Mensaje modal con color pro */}
+    <Modal show={messageModal.show} onHide={() => setMessageModal({ show: false })} centered 
+      className={messageModal.variant === "danger" ? "modal-error" : "modal-success"}>
+      <Modal.Header closeButton>
+        <Modal.Title>{messageModal.variant === "danger" ? "Error" : "Éxito"}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>{messageModal.message}</Modal.Body>
+    </Modal>
+    
     </div>
   );
 }

@@ -32,3 +32,23 @@ th {
   margin: 4px 0;
   font-weight: bold;
 }
+
+.loader-container {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.btn-start {
+  padding: 12px 30px;
+  background: #007bff;
+  border: none;
+  color: #fff;
+  border-radius: 40px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-start:hover {
+  background: #0056b3;
+}
+
